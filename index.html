@@ -86,9 +86,10 @@
   .product-card{background:var(--panel-2);border:1px solid #3a2020;border-radius:14px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:transform .08s ease;}
   .product-card:active{transform:scale(0.94);background:#331f1f;}
   .product-emoji{font-size:30px;line-height:1;}
-  /* Hat ein Produkt ein Bild, fuellt es die Kachelbreite - in Icongroesse
-     waere ein Foto am Stand nicht zu erkennen. */
-  .product-photo{width:100%;height:92px;object-fit:cover;border-radius:10px;display:block;margin-bottom:2px;}
+  /* Bild statt Icon: bewusst klein gehalten. In voller Kachelbreite zog ein
+     einziges Bild die ganze Reihe in die Hoehe, und es passten deutlich
+     weniger Produkte auf den Bildschirm. */
+  .product-photo{width:64px;height:48px;object-fit:cover;border-radius:8px;display:block;}
   /* Produktnamen, Preise und der ganze Bon stehen in der Vereinsschrift.
      Sie hat nur einen Schnitt - font-weight:normal verhindert, dass der
      Browser einen unschoenen Fett-Schnitt dazurechnet. */
@@ -227,7 +228,7 @@
     .topbar-btn{padding:8px 10px;font-size:11px;}
     .product-card{padding:10px 6px;}
     .product-emoji{font-size:24px;}
-    .product-photo{height:64px;}
+    .product-photo{width:48px;height:36px;}
     #grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;}
     #cats{padding:6px 10px 10px;}
     #topbar{padding:10px 10px 6px;}
@@ -318,7 +319,7 @@
 <div id="modal-root"></div>
 
 <script>
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 const EMOJI_CHOICES = ["🌭","🍔","🍟","🥤","🍕","🥨","🧇","🍦","🍫","☕","🍺","💧","🥙","🍿","🍩","⭐",
   "🥪","🌮","🌯","🥓","🍗","🍖","🥞","🍳","🧀","🥖","🥐","🍜","🍝","🥗","🍲","🍤","🍱","🍛","🍣",
   "🍧","🍨","🍰","🧁","🍪","🍭","🍬","🍮","🥧","🍎","🍌","🍉","🍇","🍓","🥝","🧃","🥛","🍵","🧋","🍷","🥃","🧊"];
@@ -2241,7 +2242,7 @@ function renderPhotoPreview(){
   const wrap = document.getElementById("photo-preview");
   if(!wrap) return;
   wrap.innerHTML = selectedPhoto
-    ? `<img src="${escapeHtml(sicheresBild(selectedPhoto) || "")}" style="width:132px;height:92px;object-fit:cover;border-radius:10px;border:1px solid #4a2b2b;">`
+    ? `<img src="${escapeHtml(sicheresBild(selectedPhoto) || "")}" style="width:64px;height:48px;object-fit:cover;border-radius:10px;border:1px solid #4a2b2b;">`
     : `<div style="color:var(--dim);font-size:12px;">Kein Bild ausgewählt – Icon wird verwendet.</div>`;
 }
 function handlePhotoSelect(event){

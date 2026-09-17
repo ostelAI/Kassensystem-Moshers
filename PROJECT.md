@@ -8,7 +8,7 @@ kein Framework, kein Backend). Läuft komplett im Browser, Daten liegen in
 `localStorage`. Deployed als statische Seite auf GitHub Pages
 (https://ostelai.github.io/Kassensystem-Moshers/).
 
-**Aktuelle Version: 1.0.1** (Versionsnummer steht klein neben "Kasse" unter
+**Aktuelle Version: 1.0.2** (Versionsnummer steht klein neben "Kasse" unter
 dem Vereinsnamen oben links, `const APP_VERSION` im `<script>`). Darunter
 "powered by COC" mit dem COC-Logo (`coc-logo.png`, aus dem App-Symbol des
 COC-Dashboards).
@@ -293,8 +293,10 @@ dort nie ein vom Benutzer bestimmter Text:
   `rangfolgeNeuBestimmen()`): beim Start, beim Tagesabschluss und wenn sich
   der Produktbestand ändert. Früher wurde nach jedem Verkauf neu sortiert –
   dadurch verschoben sich die Kacheln mitten im Betrieb unter dem Finger.
-  Hat ein Produkt ein Bild, füllt es die Kachelbreite (`.product-photo`, 92 px
-  hoch, zugeschnitten); sonst das Emoji. In Bon-nahen Listen (Verwaltung,
+  Hat ein Produkt ein Bild, steht es klein über dem Namen (`.product-photo`,
+  64×48 px, zugeschnitten); sonst das Emoji. In 1.0.1 füllte das Bild die
+  Kachelbreite (92 px hoch) – das zog ganze Reihen in die Höhe und wurde in
+  1.0.2 wieder verkleinert. In Bon-nahen Listen (Verwaltung,
   Ranking, Inventur) bleibt das Bild klein wie ein Icon.
 - **Bon** (rechts, dauerhaft sichtbar, kompakt): Bon-Leiste über dem Bon, die
   Chips **brechen um** und scrollen bei Bedarf senkrecht (`#tab-row`).
