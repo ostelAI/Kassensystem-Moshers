@@ -18,7 +18,7 @@
    Domain (z. B. zwei GitHub-Pages-Projekte), teilen sie sich den Cache-Speicher.
    Beim Aufraeumen darf die eine Kasse die Dateien der anderen nicht loeschen. */
 const CACHE_PRAEFIX = "moshers-kasse-";
-const CACHE_APP   = CACHE_PRAEFIX + "app-v1";
+const CACHE_APP   = CACHE_PRAEFIX + "app-v2";
 const CACHE_FONTS = CACHE_PRAEFIX + "fonts-v1";
 const AKTUELLE_CACHES = [CACHE_APP, CACHE_FONTS];
 
@@ -31,7 +31,8 @@ const APP_DATEIEN = [
   "./icon-32.png",
   "./icon-180.png",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./coc-logo.png"
 ];
 
 /* Wie lange auf das Netz gewartet wird, bevor die gespeicherte Fassung

@@ -42,6 +42,7 @@ index.html      die komplette App
 sw.js           Service Worker (Offline-Betrieb)
 manifest.json   PWA-Manifest
 night-warrior.ttf  Vereinsschrift (Pixel Sagas, Freeware)
+coc-logo.png    Logo für „powered by COC“
 icon-*.png      App-Symbole (Manni aus dem Vereinslogo)
 PROJECT.md      technische Notizen: Datenhaltung, Entscheidungen, Fallstricke
 ```

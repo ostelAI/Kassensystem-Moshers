@@ -5,10 +5,16 @@ Kassensystem (POS) für den Imbissstand des Chronical Moshers Metalclub
 Reichenbach auf Vereinsfesten.
 Eine einzige eigenständige `index.html`-Datei (Vanilla JS, kein Build-Prozess,
 kein Framework, kein Backend). Läuft komplett im Browser, Daten liegen in
-`localStorage`. Deployed als statische Seite auf Netlify.
+`localStorage`. Deployed als statische Seite auf GitHub Pages
+(https://ostelai.github.io/Kassensystem-Moshers/).
 
-**Aktuelle Version: 2.0.2** (Versionsnummer steht klein neben dem Titel
-"Kasse" unter dem Vereinsnamen oben links, `const APP_VERSION` im `<script>`).
+**Aktuelle Version: 1.0.0** (Versionsnummer steht klein neben "Kasse" unter
+dem Vereinsnamen oben links, `const APP_VERSION` im `<script>`). Darunter
+"powered by COC" mit dem COC-Logo (`coc-logo.png`, aus dem App-Symbol des
+COC-Dashboards).
+
+Als eigenständiges Projekt beginnt die Zählung bei 1.0.0. Versionsangaben
+2.0.x weiter unten im Text beziehen sich auf die Imbiss Kasse.
 
 ## Herkunft: zwei Stände zusammengeführt
 Die Kasse gab es zuletzt in zwei getrennt weiterentwickelten Fassungen:
@@ -36,6 +42,7 @@ aus der Original-Vektordatei neu erzeugt, siehe "Branding".
 - `sw.js` – Service Worker, macht die App offline-fähig (siehe unten)
 - `manifest.json` – PWA-Manifest (Name, Icons, `display: standalone`)
 - `night-warrior.ttf` – Vereinsschrift, siehe "Branding"
+- `coc-logo.png` – COC-Logo für "powered by COC" in der Kopfzeile
 - `icon-32.png`, `icon-180.png`, `icon-192.png`, `icon-512.png` – App-Icons,
   die Manni-Figur aus dem Vereinslogo auf dunkelrotem Grund
 
@@ -331,9 +338,9 @@ dort nie ein vom Benutzer bestimmter Text:
   artige Zusammenfassungen an den Nutzer).
 - **Versionsnummer**: Wird nur auf explizite Anweisung des Nutzers erhöht/
   geändert – nicht automatisch bei jeder Änderung. Format zuletzt
-  `MAJOR.MINOR.PATCH` (z. B. 2.0.2). Klein neben dem Titel anzeigen,
-  Dateiname enthält ebenfalls die Version (z. B. `moshers-kasse-v2.0.2.html`
-  als Referenz – im Netlify-Deploy heißt sie aber `index.html`).
+  `MAJOR.MINOR.PATCH` (z. B. 1.0.0). Klein neben dem Titel anzeigen,
+  Dateiname enthält ebenfalls die Version (z. B. `moshers-kasse-v1.0.0.html`
+  als Referenz – im Deploy heißt sie aber `index.html`).
 - **Datensicherheit hat hohe Priorität**: Nutzer ist sehr besorgt, dass bei
   Updates keine Daten verloren gehen. Jede neue Funktion, die Daten
   einführt, sollte in Export/Import mit aufgenommen werden.
