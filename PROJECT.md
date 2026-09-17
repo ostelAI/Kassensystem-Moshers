@@ -1,0 +1,343 @@
+# Chronical Moshers – Kasse – Projekt-Übergabe
+
+## Was das ist
+Kassensystem (POS) für den Imbissstand des Chronical Moshers Metalclub
+Reichenbach auf Vereinsfesten.
+Eine einzige eigenständige `index.html`-Datei (Vanilla JS, kein Build-Prozess,
+kein Framework, kein Backend). Läuft komplett im Browser, Daten liegen in
+`localStorage`. Deployed als statische Seite auf Netlify.
+
+**Aktuelle Version: 2.0.2** (Versionsnummer steht klein neben dem Titel
+"Kasse" unter dem Vereinsnamen oben links, `const APP_VERSION` im `<script>`).
+
+## Herkunft: zwei Stände zusammengeführt
+Die Kasse gab es zuletzt in zwei getrennt weiterentwickelten Fassungen:
+
+- **Imbiss Kasse** (Repo `Kassensystem-Imbiss`, Stand `b921dd8`): PIN,
+  Offline-Betrieb, Inventur/Einkaufsliste, Datenprüfung, Cent-Rechnung.
+  Deren Historie liegt dort; dieses Repo ist eigenständig und beginnt neu.
+- **`Kasse Moshers.html` v2.1** (einzelne Datei aus einem Chat): Pfandsystem,
+  Vereinsfarben, Schrift "Night Warrior".
+
+Diese Fassung baut auf der Imbiss Kasse auf und übernimmt aus v2.1 das
+Pfandsystem und das Branding. Bewusst **nicht** übernommen, weil die Imbiss
+Kasse das jeweils später und begründet geändert hat:
+
+- Gast-Bons werden beim Bezahlen **nicht** gelöscht (v2.1: gelöscht)
+- Tagesumsatz, Wochenverlauf und Tagesabschluss liegen hinter der PIN
+- Wochenverlauf hält rund ein Jahr (400 Tage), nicht 60
+- Sicherung umfasst alle Daten, nicht nur Produkte/Kategorien/Pfandarten
+
+Das eingebettete Logo in v2.1 war defekt (vier einfarbige Flächen). Es wurde
+aus der Original-Vektordatei neu erzeugt, siehe "Branding".
+
+## Dateien in diesem Ordner
+- `index.html` – die komplette App (HTML+CSS+JS in einer Datei)
+- `sw.js` – Service Worker, macht die App offline-fähig (siehe unten)
+- `manifest.json` – PWA-Manifest (Name, Icons, `display: standalone`)
+- `night-warrior.ttf` – Vereinsschrift, siehe "Branding"
+- `icon-32.png`, `icon-180.png`, `icon-192.png`, `icon-512.png` – App-Icons,
+  die Manni-Figur aus dem Vereinslogo auf dunkelrotem Grund
+
+Diese Dateien liegen zusammen im Root-Verzeichnis eines Netlify-Sites-Deploys
+(kein Unterordner). `index.html` verlinkt Manifest und Icons per `<link>`-Tags
+im `<head>` und meldet am Ende des `<script>`-Blocks den Service Worker an.
+
+**`sw.js` muss beim Deploy mit hochgeladen werden** – fehlt die Datei, ist die
+App wieder nur online lauffähig (die App selbst läuft weiter, nur ohne
+Offline-Reserve).
+
+## Offline-Fähigkeit (seit dieser Fassung)
+Der Service Worker legt die Programmdateien (`index.html`, `manifest.json`,
+Icons) in einem Browser-Cache ab. Fällt am Stand das Netz aus, startet die
+Kasse trotzdem.
+
+- **Kassendaten sind davon nicht betroffen.** Der Service Worker speichert
+  ausschließlich Dateien, kein `localStorage`. Er kann Daten weder lesen
+  noch löschen.
+- **Updates kommen weiterhin automatisch an.** Die `index.html` wird bei
+  vorhandenem Netz immer zuerst frisch geladen (network-first, 2,5 s
+  Zeitlimit). Nur wenn das Netz fehlt oder zu langsam ist, springt die
+  gespeicherte Fassung ein. Neues Deploy hochladen → beim nächsten Öffnen da.
+- **Cache-Namen** stehen in `sw.js` (`CACHE_APP`, `CACHE_FONTS`) und sind
+  bewusst von `APP_VERSION` entkoppelt, damit ein Versionssprung der App
+  nicht an den Cache gekoppelt ist. Wenn sich die Dateiliste ändert oder ein
+  Cache-Reset nötig wird: Zahl am Ende des Cache-Namens hochzählen.
+- **Google Fonts** kommen weiterhin vom CDN, werden aber mitgecacht. Ohne
+  Netz und ohne Cache greifen die Ersatzschriften – die App bleibt bedienbar,
+  sieht nur anders aus.
+- **`navigator.storage.persist()`** wird beim Start angefragt. Ohne diese
+  Kennzeichnung darf der Browser den `localStorage` bei knappem Gerätespeicher
+  von sich aus leeren. Der Browser kann die Anfrage ablehnen; bei einer
+  installierten PWA wird sie in der Regel gewährt.
+
+## Wie es deployed ist
+- Netlify, manuelles Deploy (ZIP-Upload über app.netlify.com/drop), eigener
+  Site-Name gesetzt
+- Auf dem Windows-Tablet am Stand über Chrome/Edge als PWA
+  installiert ("An Start anheften") – läuft dort im App-Fenster ohne
+  Adressleiste
+- Updates: einfach neue Datei(en) erneut auf dieselbe Netlify-Site hochladen,
+  Tablet lädt beim nächsten Öffnen automatisch die neue Version nach
+  (kein Neuinstallieren nötig)
+
+## Datenhaltung (wichtig!)
+**Alles liegt in `localStorage`, nichts in der Datei selbst.** Das heißt:
+Datei/Version austauschen = Daten bleiben erhalten, solange Origin
+(URL) gleich bleibt. Keys (alle unter dem Präfix `moshers:`):
+
+**Warum nicht `kasse:` wie in der Imbiss Kasse?** Beide Kassen laufen auf
+GitHub Pages unter `ostelai.github.io`. `localStorage` gehört zur Domain, nicht
+zum Pfad – mit gleichen Schlüsseln würden sich die beiden Kassen gegenseitig
+Produkte, Umsätze und PIN überschreiben. Das Präfix darf deshalb nicht zurück
+auf `kasse:` geändert werden. Sicherungsdateien sind davon nicht betroffen: Sie
+enthalten Feldnamen (`products`, `pfandTypes` …), keine Speicherschlüssel, und
+lassen sich zwischen beiden Kassen austauschen.
+
+| Key | Inhalt |
+|---|---|
+| `moshers:products` | Array `{id, name, price, category, emoji, image?, pfandId}` – `image` ist optional ein Data-URL (Foto statt Icon, via Mediathek/Kamera ausgewählt, clientseitig auf ~220px verkleinert). `pfandId` verweist auf eine Pfandart oder ist `null` |
+| `moshers:pfand-types` | Pfandarten `{id, name, amount}`, z. B. Becher 2,00 € |
+| `moshers:pfand-collected` / `moshers:pfand-returned` | Heute kassiertes / zurückgegebenes Pfand, resettet bei Tagesabschluss. **Kein Umsatz** |
+| `moshers:categories` | Array von Kategorienamen, frei erweiterbar/löschbar |
+| `moshers:supplies` | Verbrauchsmaterial (nicht verkäuflich), `{id, name, emoji}` |
+| `moshers:inventory` | `{[id]: {stock, target, threshold}}` – gilt für Produkte UND supplies. `target` ("Soll") ist **tot**: seit 2.0.1 nicht mehr editierbar, seither auch nirgends mehr gelesen. Das Feld bleibt nur im Objekt, damit alte Sicherungsdateien weiter einlesbar sind. Gepflegt werden `stock` ("Ist") und `threshold` ("Warnen ab"). **`threshold: null` = für diesen Artikel nicht warnen, `threshold: 0` = warnen, sobald nichts mehr da ist.** |
+| `moshers:schwelle-migriert-v1` | Merker, dass die einmalige Schwellwert-Umstellung gelaufen ist (siehe unten). Nicht löschen. |
+| `moshers:pin` | SHA-256-Prüfsumme der PIN für die Umsatzansichten. Nie im Klartext. Fehlt der Key, ist noch keine PIN vergeben. |
+| `moshers:daily-total` / `moshers:daily-sales` | Tagesumsatz / Tages-Verkaufszähler pro Produkt, resettet bei Tagesabschluss |
+| `moshers:total-sales` | Verkaufszähler pro Produkt, **niemals zurückgesetzt** – bestimmt die Sortierung in der "Alle"-Ansicht (meistverkauft oben) |
+| `moshers:day-history` | Archiv vergangener Tage `{date, label, total, sales, pfandCollected, pfandReturned}` (max. 400), entsteht bei jedem Tagesabschluss |
+| `moshers:open-tabs` / `moshers:active-tab` | Mehrere gleichzeitig offene "Bons" (Tabs). `default`/"Schnellverkauf" ist immer vorhanden. **Gast-Tabs werden beim Bezahlen NICHT gelöscht** (seit 2.0.2) – nur die Artikel werden geleert, der Tab bleibt für Stammgäste bestehen. Löschen nur manuell über X + Bestätigungsdialog |
+| `moshers:last-completed-order` | Snapshot `{items, total, pfand, tabName, completedAt}` der zuletzt abgeschlossenen Bestellung, `total` inklusive Pfand (egal welcher Tab), read-only einsehbar über eigenen blauen Tab-Chip "🕓 Letzte Bestellung", wird bei jeder neuen Zahlung überschrieben |
+
+Export/Import ("⬇ Sichern" / "⬆ Wiederherstellen" in der Produktverwaltung)
+sichert/liest **alle** obigen Keys als eine JSON-Datei. Die Datei enthält
+zusätzlich das Feld `schwelleMigriert` – siehe nächster Abschnitt. Wer neue
+Daten einführt, muss sie hier mit aufnehmen, sonst gehen sie bei einem
+Adresswechsel verloren.
+
+**Der Export ist zugleich der Umzugsweg.** Weil alle Daten am `localStorage`
+und damit an der URL hängen, ist "⬇ Sichern" auf der alten und
+"⬆ Wiederherstellen" auf der neuen Adresse der einzige Weg, den Datenbestand
+mitzunehmen.
+
+## Schwellwerte ("Warnen ab") – Bedeutungsänderung
+Früher galt `threshold: 0` als "nicht gesetzt", weil 0 zugleich der automatisch
+vergebene Startwert war. Folge: Wer "Warnen ab 0" eintrug, bekam **nie** eine
+Warnung. Jetzt gilt:
+
+- **Feld leer** (`null`) → für diesen Artikel wird nicht gewarnt (Platzhalter "aus")
+- **0 eingetragen** → Warnung, sobald der Bestand auf 0 fällt
+- **Zahl eingetragen** → Warnung, sobald der Bestand diese Zahl erreicht
+
+Damit auf bestehenden Geräten nicht schlagartig für jedes je verkaufte Produkt
+eine Warnung erscheint, stellt `schwellenwerteUmstellen()` beim ersten Start
+alle vorhandenen Nullen einmalig auf `null` und setzt
+`moshers:schwelle-migriert-v1`. Bewusst gesetzte Schwellwerte > 0 bleiben
+unangetastet. Die Umstellung läuft genau einmal – danach zählt eine
+eingetragene 0 wieder als echter Schwellwert.
+
+**Beim Import gilt dasselbe, und zwar unabhängig vom Merker des Geräts.** Eine
+Sicherungsdatei ohne das Feld `schwelleMigriert` stammt aus einer Fassung vor
+dieser Änderung; ihre Nullen werden beim Einlesen auf `null` gestellt
+(`altnullenAufNichtGesetzt()`). Ohne diese Sonderbehandlung ginge der Umzug auf
+eine neue Adresse schief: Dort läuft die Umstellung beim ersten Start ins Leere
+und setzt den Merker – die danach importierten Altdaten würden also nicht mehr
+umgestellt und lösten für fast jedes Produkt eine Warnung aus. Nach jedem Import
+gilt die Umstellung als erledigt.
+
+## Pfand
+- **Pfandarten** (Name + Betrag) unter "Produkte verwalten" anlegen und löschen.
+  Beim Löschen verlieren zugeordnete Produkte ihr Pfand. Bearbeiten gibt es
+  nicht – löschen und neu anlegen.
+- **Zuordnung** je Produkt im Produktformular ("Kein Pfand" oder eine Pfandart).
+  Die Kachel zeigt "+ 2,00 € Pfand" unter dem Preis.
+- **Bon:** je Pfandart eine Zeile, darunter Zwischensumme / Pfand / Gesamt. Die
+  Aufteilung erscheint nur, wenn Pfand im Bon ist.
+- **Bezahlen:** `warenSumme()` geht in den Tagesumsatz, `pfandSumme()` nach
+  `pfandCollected`. Beides über Cent-Rechnung.
+- **Rückgabe:** Knopf "↩ Pfand" in der Kopfzeile, **ohne PIN** (der Gast steht
+  mit dem Becher am Tresen). Menge je Pfandart per +/−, Auszahlbetrag wird
+  nach `pfandReturned` gebucht. Das Fenster ändert beim Tippen nur Zahl und
+  Betrag, statt sich neu aufzubauen.
+- **Offenes Pfand** = kassiert − zurückgegeben. Solange es > 0 ist, wird der
+  Knopf rot ("↩ Pfand offen"). **Der Betrag steht bewusst nicht dort**, sondern
+  nur im Tagesumsatz-Fenster und in der Tagesansicht des Wochenverlaufs – beide
+  hinter der PIN. Aus dem kassierten Pfand ließe sich sonst die Zahl der
+  verkauften Getränke ablesen.
+- **Tagesabschluss** fragt nach, wenn noch Pfand offen ist, sperrt aber nicht:
+  Auf mehrtägigen Festen kommen Becher auch erst am nächsten Tag zurück. Am
+  Folgetag kann dadurch mehr zurückgegeben als kassiert werden – die Bilanz
+  zeigt dann "Mehr zurückgegeben".
+- **Import:** Sicherungen ohne `pfandTypes` (z. B. aus der Imbiss Kasse) lassen
+  die Pfandarten des Geräts stehen. Produkte, deren `pfandId` auf keine
+  vorhandene Pfandart zeigt, werden bei der Datenprüfung auf `null` gesetzt.
+
+## Branding
+- **Logo "Manni"** (Bierkrug mit Pommesgabel, "Chronical Moshers – Metalclub
+  Reichenbach – est. 1982"). Quelle: `Manni_CM_Logo_est1982.pdf` aus
+  Illustrator. Die PDF enthält nur einfarbige Füllpfade; diese wurden ohne
+  Änderung der Form in SVG-Pfade umgerechnet und stehen **einmal** als
+  `<symbol id="manni">` am Anfang von `<body>`. Kopfzeile und Bon binden es
+  per `<use href="#manni">` ein. Die Farbe kommt über `currentColor` vom
+  Einsatzort (hell auf der Tafel, Tinte auf dem Bon) – es gibt also keine
+  Farbvarianten als Bilddateien.
+- **App-Icons:** Nur die Figur ohne Schriftzug, cremefarben auf dunkelrotem
+  Verlauf. 192/512 mit Rand für "maskable", 180/32 enger zugeschnitten, das
+  32er mit dickeren Linien, damit es als Favicon noch erkennbar ist.
+- **Schrift "Night Warrior"** (Pixel Sagas, Freeware) für Vereinsname und
+  Bon-Kopf. Eigene Datei `night-warrior.ttf`, vom Service Worker mit
+  vorgehalten. Ersatzschrift: Archivo Black.
+- **Farben:** Schwarz/Blutrot. Die CSS-Variablen heißen weiter `--mustard`
+  (jetzt helles Rot, Akzent) und `--paprika` (dunkles Rot, Flächen), damit der
+  übrige Code unverändert bleibt. Neu ist `--warn-text` für Warntext auf
+  dunklem Grund – `--paprika` ist dafür zu dunkel.
+- **Service-Worker-Caches** heißen `moshers-kasse-…`, nicht `imbiss-kasse-…`.
+  Beide Kassen liegen unter derselben Domain; so räumt keine beim Update die
+  Dateien der anderen weg. Die Daten trennt das Schlüssel-Präfix `moshers:`.
+
+## PIN für die Umsatzansichten
+Am Stand schaut der halbe Tresen auf den Bildschirm. Der Tagesumsatz steht
+deshalb nicht mehr offen in der Kopfzeile, sondern als `•••`. Hinter der PIN
+liegen:
+
+- der Betrag in der Kopfzeile
+- 📅 Wochenverlauf
+- der Tagesabschluss (er sitzt im Tagesumsatz-Fenster)
+
+**🏆 Tagesranking ist bewusst frei zugänglich** (so gewünscht, 05.09.2026) und
+zeigt deshalb **nur Stückzahlen, keine Eurobeträge** – sonst liesse sich der
+Tagesumsatz aus den Einzelzeilen zusammenzählen. Gesteuert über den zweiten
+Parameter von `renderRankingRows(salesObj, mitBetraegen)`: im Tagesranking
+`false`, in der Tagesansicht des Wochenverlaufs `true`, weil die hinter der PIN
+liegt. Der Knopf "Tagesumsatz" im Ranking läuft über `mitPin()`, sonst wäre über
+diesen Umweg auch der Tagesabschluss offen gewesen.
+
+Verkaufen, Bons und Inventur bleiben frei bedienbar – die braucht sie im
+Betrieb, und dort steht kein Umsatz.
+
+**Ablauf:** `mitPin(aktion)` führt die Aktion aus, sobald die PIN stimmt. Ist
+noch keine vergeben, wird sie beim ersten Zugriff festgelegt (Eingabe +
+Wiederholung). Nach richtiger Eingabe bleibt es **2 Minuten** entsperrt
+(`PIN_ENTSPERRT_MS`), damit nicht für Ranking und Wochenverlauf zweimal
+hintereinander getippt werden muss. `updateClock()` prüft mit, sodass sich der
+Betrag nach Ablauf von selbst wieder verdeckt. Eingabe über einen Zifferblock,
+nicht über die Tastatur – es ist ein Touch-Gerät.
+
+**Vergessene PIN:** "Produkte verwalten" enthält "🔒 PIN zurücksetzen", solange
+eine gesetzt ist. Damit kommt sie immer wieder herein. Der Preis: Wer den Knopf
+kennt, umgeht die Sperre.
+
+**Was das leistet – und was nicht.** Es schützt gegen Blicke über die Schulter.
+Es schützt *nicht* gegen jemanden, der das Tablet in der Hand hat und sich
+auskennt, denn die Daten liegen im `localStorage` des Geräts. Genau der
+beiläufige Schutz war aber der Zweck. Die PIN wird als Prüfsumme abgelegt, damit
+sie beim Blick in den Speicher nicht im Klartext steht – sie könnte anderswo
+wiederverwendet sein.
+
+**Umzug:** Die Prüfsumme wandert im Feld `pin` in der Sicherungsdatei mit. Ohne
+das stünde die App auf einer neuen Adresse ohne PIN da – die Umsatzansichten
+wären dort offen.
+
+## Datenprüfung (`datensatzPruefen`)
+Alles, was aus dem `localStorage` oder aus einer Sicherungsdatei kommt, gilt als
+unbekannt und wird durch `datensatzPruefen()` normalisiert, bevor die App damit
+arbeitet. Die Funktion läuft an **zwei** Stellen:
+
+- **beim Start** (`init()`) – dadurch heilt ein bereits gespeicherter Schaden von
+  selbst aus, statt die App dauerhaft unbenutzbar zu lassen
+- **beim Import** – dort wird geprüft, **bevor** gespeichert wird
+
+Früher wurde beim Import zuerst gespeichert und danach angezeigt. Eine Datei mit
+einem Produkt ohne Preis brachte damit `fmt(undefined)` zum Absturz, das Raster
+blieb leer, und weil "Produkte verwalten" an derselben Stelle abstürzte, kam man
+an den Import nicht mehr heran – auch nach einem Neustart nicht.
+
+Regeln: Produkte brauchen Name und eine Zahl als Preis (0 ist erlaubt), sonst
+werden sie übersprungen und im Bestätigungsdialog gemeldet. Kennungen müssen
+`[A-Za-z0-9_-]{1,64}` erfüllen, weil sie in `onclick`-Attributen landen; passt
+eine Kennung nicht, bekommt der Eintrag eine neue. Schlüssel in `inventory`,
+`dailySales` und `totalSales` werden dagegen **verworfen** statt umbenannt – eine
+neue Kennung zeigt auf kein Produkt und käme bei jedem Start erneut hinzu.
+Bilder nur als `data:image/…;base64`, Icons höchstens vier Zeichen. Bons ohne
+`items` bekommen ein leeres Objekt, statt beim Zeichnen abzustürzen.
+
+**Wichtig:** Echte Daten dürfen dabei nicht verändert werden. `"Sonstiges"` wird
+nur angelegt, wenn wirklich ein Produkt dorthin zurückfällt.
+
+## Sicherheit: Werte aus Daten im HTML
+`escapeHtml()` ersetzt auch `"` und `'` – vorher nur `& < >`, wodurch
+Attributwerte wie `src="…"` ungeschützt waren.
+
+Für `onclick`-Attribute reicht Escaping grundsätzlich **nicht**: Der Browser
+wandelt Entitäten im Attribut zurück, bevor der JavaScript-Teil gelesen wird. Ein
+`&#39;` wird also wieder zu `'` und bricht die Zeichenkette auf. Deshalb steht
+dort nie ein vom Benutzer bestimmter Text:
+
+- `deleteCategory(index)` bekommt die **Position**, nicht den Kategorienamen
+- alle anderen Handler bekommen Kennungen, die die Datenprüfung auf ein
+  unverfängliches Zeichenrepertoire begrenzt hat
+
+## Feature-Überblick (Stand v2.0.2)
+- **Dashboard**: Kopfzeile mit verdecktem Tagesumsatz (`•••`, antippen und PIN),
+  Kategorie-Tabs, Produktraster. "Alle" sortiert nach
+  Gesamt-Verkaufsranking, einzelne Kategorien alphabetisch. Die Reihenfolge
+  wird bewusst **nur zu festen Zeitpunkten** neu bestimmt (`rangfolge` /
+  `rangfolgeNeuBestimmen()`): beim Start, beim Tagesabschluss und wenn sich
+  der Produktbestand ändert. Früher wurde nach jedem Verkauf neu sortiert –
+  dadurch verschoben sich die Kacheln mitten im Betrieb unter dem Finger.
+  Zeigt Foto statt Emoji, falls eins hinterlegt ist.
+- **Bon** (rechts, dauerhaft sichtbar, kompakt): Bon-Leiste über dem Bon, die
+  Chips **brechen um** und scrollen bei Bedarf senkrecht (`#tab-row`).
+  **"+ Gast" steht außerhalb dieser Leiste** (`#tab-add`) und ist dadurch immer
+  sichtbar. Vorher lief die Leiste seitlich: Sobald der erste Verkauf
+  abgeschlossen war, schob der Chip "Letzte Bestellung" den Knopf aus dem Bild –
+  und dass man dort wischen kann, sieht man der Leiste nicht an. Die Gast-Bons
+  waren damit praktisch unauffindbar. Reihenfolge –
+  Reihenfolge: 🔴 Schnellverkauf → 🔵 Letzte Bestellung (falls vorhanden) →
+  Gäste. Gast-Chips pulsieren pink, sobald Artikel drin sind, werden nach
+  Bezahlung wieder grau (Tab bleibt aber bestehen). "+ Gast" legt neuen
+  benannten Tab an.
+- **Kasse**: Zahlenblock, Schnellbeträge, automatische Rückgeldberechnung.
+- **📦 Inventur**: Aufklappbare Kategorien (Klick-Zustand bleibt über
+  Re-Renders erhalten – wichtiger Bugfix in 2.0.1), pro Produkt/Verbrauchs-
+  material nur noch "Ist" + "Warnen ab". Eingaben aktualisieren nur noch die
+  **betroffene Zeile** (`aktualisiereLagerZeile()`), nicht mehr das ganze
+  Fenster – sonst sprang die Liste bei jeder Eingabe an den Anfang und der
+  Fokus ging verloren. Gleiches Prinzip auf der Einkaufsliste: eine
+  abgearbeitete Zeile wird herausgenommen statt die Liste neu aufzubauen. "+ Hinzufügen" für Wareneingang.
+  Verbrauchsmaterial (z. B. Frittierfett) in eigenem Abschnitt, nicht
+  verkäuflich, wird nicht automatisch abgezogen.
+- **🛒 Einkaufsliste**: automatisch aus Inventur generiert, alles unter
+  Schwellwert, gruppiert nach Kategorie. Button pulsiert stark/auffällig
+  (weißer Rand, starker Scale-Puls), sobald etwas nachbestellt werden muss.
+- **🏆 Tagesranking** / **📅 Wochenverlauf**: Tagesabschluss archiviert Tag
+  automatisch, Verlauf einsehbar und pro Tag aufklappbar.
+- **Produktverwaltung**: nach Kategorie gruppiert, Foto-Upload (Mediathek/
+  Kamera, wird clientseitig via Canvas verkleinert auf JPEG q0.78), Icon-
+  Fallback (60+ Emoji-Auswahl), freie Kategorienverwaltung, Löschen nur mit
+  Bestätigungsdialog.
+- **⬇ Sichern / ⬆ Wiederherstellen**: vollständiger JSON-Export/Import,
+  siehe Tabelle oben.
+- **Vollbild-Button** (⛶) über die Fullscreen-API.
+
+## Bekannte offene Wünsche (noch NICHT umgesetzt)
+- Kein "Was ist neu"-Hinweis/Badge in der App bei neuer Version – wurde
+  besprochen, aber explizit noch nicht gebaut (Nutzer wollte das erst
+  perspektivisch, "noch nix einfügen").
+
+## Wichtige Konventionen, die bisher eingehalten wurden
+- **Sprache**: Alles auf Deutsch (UI-Texte, Kommentare im Code, Commit-
+  artige Zusammenfassungen an den Nutzer).
+- **Versionsnummer**: Wird nur auf explizite Anweisung des Nutzers erhöht/
+  geändert – nicht automatisch bei jeder Änderung. Format zuletzt
+  `MAJOR.MINOR.PATCH` (z. B. 2.0.2). Klein neben dem Titel anzeigen,
+  Dateiname enthält ebenfalls die Version (z. B. `moshers-kasse-v2.0.2.html`
+  als Referenz – im Netlify-Deploy heißt sie aber `index.html`).
+- **Datensicherheit hat hohe Priorität**: Nutzer ist sehr besorgt, dass bei
+  Updates keine Daten verloren gehen. Jede neue Funktion, die Daten
+  einführt, sollte in Export/Import mit aufgenommen werden.
+- **Kein Server/Backend**: bewusst so gewählt (Netlify Free, keine
+  Kosten). Bitte keine Server-Komponente vorschlagen, ohne zu fragen.
+- **Zielgruppe der Bedienung**: eine Person am Vereinsstand auf einem
+  Windows-Tablet, Touch-Bedienung, große Buttons, wenig Text.
