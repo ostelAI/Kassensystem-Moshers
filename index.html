@@ -83,9 +83,12 @@
 
   #grid-wrap{flex:1;overflow-y:auto;padding:4px 18px 24px;}
   #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px;}
-  .product-card{background:var(--panel-2);border:1px solid #3a2020;border-radius:14px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .08s ease;}
+  .product-card{background:var(--panel-2);border:1px solid #3a2020;border-radius:14px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:transform .08s ease;}
   .product-card:active{transform:scale(0.94);background:#331f1f;}
   .product-emoji{font-size:30px;line-height:1;}
+  /* Hat ein Produkt ein Bild, fuellt es die Kachelbreite - in Icongroesse
+     waere ein Foto am Stand nicht zu erkennen. */
+  .product-photo{width:100%;height:92px;object-fit:cover;border-radius:10px;display:block;margin-bottom:2px;}
   /* Produktnamen, Preise und der ganze Bon stehen in der Vereinsschrift.
      Sie hat nur einen Schnitt - font-weight:normal verhindert, dass der
      Browser einen unschoenen Fett-Schnitt dazurechnet. */
@@ -224,6 +227,7 @@
     .topbar-btn{padding:8px 10px;font-size:11px;}
     .product-card{padding:10px 6px;}
     .product-emoji{font-size:24px;}
+    .product-photo{height:64px;}
     #grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;}
     #cats{padding:6px 10px 10px;}
     #topbar{padding:10px 10px 6px;}
@@ -314,7 +318,7 @@
 <div id="modal-root"></div>
 
 <script>
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 const EMOJI_CHOICES = ["🌭","🍔","🍟","🥤","🍕","🥨","🧇","🍦","🍫","☕","🍺","💧","🥙","🍿","🍩","⭐",
   "🥪","🌮","🌯","🥓","🍗","🍖","🥞","🍳","🧀","🥖","🥐","🍜","🍝","🥗","🍲","🍤","🍱","🍛","🍣",
   "🍧","🍨","🍰","🧁","🍪","🍭","🍬","🍮","🥧","🍎","🍌","🍉","🍇","🍓","🥝","🧃","🥛","🍵","🧋","🍷","🥃","🧊"];
@@ -700,7 +704,11 @@ function renderGrid(){
     const card = document.createElement("div");
     card.className = "product-card";
     const pfand = pfandArt(p.pfandId);
-    card.innerHTML = `<div class="product-emoji">${productIconHtml(p,34)}</div><div class="product-name">${escapeHtml(p.name)}</div><div class="product-price">${fmt(p.price)}</div>`
+    const bild = sicheresBild(p.image);
+    const kopf = bild
+      ? `<img class="product-photo" src="${escapeHtml(bild)}" alt="">`
+      : `<div class="product-emoji">${productIconHtml(p,34)}</div>`;
+    card.innerHTML = `${kopf}<div class="product-name">${escapeHtml(p.name)}</div><div class="product-price">${fmt(p.price)}</div>`
       + (pfand ? `<div class="product-pfand">+ ${fmt(pfand.amount)} Pfand</div>` : "");
     card.onclick = ()=> addToCart(p.id);
     grid.appendChild(card);
@@ -2200,14 +2208,14 @@ function openProductForm(){
         <input id="f-name" type="text" value="${p?escapeHtml(p.name):''}" placeholder="z. B. Currywurst">
         <label>Preis (€)</label>
         <input id="f-price" type="number" step="0.10" min="0" value="${p?p.price:''}" placeholder="3,50">
-        <label>Foto (optional, wird statt Icon angezeigt)</label>
+        <label>Bild (optional, wird statt Icon angezeigt)</label>
         <div id="photo-preview" style="margin-bottom:8px;"></div>
         <input type="file" id="f-photo-input" accept="image/*" style="display:none;" onchange="handlePhotoSelect(event)">
         <div class="modal-row">
-          <button class="btn-secondary" onclick="document.getElementById('f-photo-input').click()">📷 Foto wählen</button>
-          <button class="btn-secondary" onclick="removePhoto()">✕ Foto entfernen</button>
+          <button class="btn-secondary" onclick="document.getElementById('f-photo-input').click()">🖼 Bild wählen</button>
+          <button class="btn-secondary" onclick="removePhoto()">✕ Bild entfernen</button>
         </div>
-        <label style="margin-top:18px;">Icon (wird verwendet, solange kein Foto gewählt ist)</label>
+        <label style="margin-top:18px;">Icon (wird verwendet, solange kein Bild gewählt ist)</label>
         <div class="emoji-picker" id="emoji-picker"></div>
         <label>Kategorie</label>
         <select id="f-category" onchange="toggleNewCategoryField()">${catOptions}<option value="__new__">+ Neue Kategorie…</option></select>
@@ -2233,8 +2241,8 @@ function renderPhotoPreview(){
   const wrap = document.getElementById("photo-preview");
   if(!wrap) return;
   wrap.innerHTML = selectedPhoto
-    ? `<img src="${escapeHtml(sicheresBild(selectedPhoto) || "")}" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #4a2b2b;">`
-    : `<div style="color:var(--dim);font-size:12px;">Kein Foto ausgewählt – Icon wird verwendet.</div>`;
+    ? `<img src="${escapeHtml(sicheresBild(selectedPhoto) || "")}" style="width:132px;height:92px;object-fit:cover;border-radius:10px;border:1px solid #4a2b2b;">`
+    : `<div style="color:var(--dim);font-size:12px;">Kein Bild ausgewählt – Icon wird verwendet.</div>`;
 }
 function handlePhotoSelect(event){
   const file = event.target.files[0];
@@ -2243,21 +2251,27 @@ function handlePhotoSelect(event){
   reader.onload = ()=>{
     const img = new Image();
     img.onload = ()=>{
-      const maxSize = 220;
+      /* 360 px reichen fuer die Kachel auch auf hochaufloesenden Tablets und
+         halten den Speicher klein (ca. 20-40 KB je Bild im localStorage). */
+      const maxSize = 360;
       let w = img.width, h = img.height;
       if(w >= h){ if(w > maxSize){ h = Math.round(h * maxSize / w); w = maxSize; } }
       else { if(h > maxSize){ w = Math.round(w * maxSize / h); h = maxSize; } }
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext("2d");
+      /* JPEG kennt keine Transparenz. Freigestellte PNGs bekommen daher die
+         Kachelfarbe als Hintergrund statt eines schwarzen Kastens. */
+      ctx.fillStyle = "#221414";
+      ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
-      selectedPhoto = canvas.toDataURL("image/jpeg", 0.78);
+      selectedPhoto = canvas.toDataURL("image/jpeg", 0.8);
       renderPhotoPreview();
     };
     img.onerror = ()=>{ alert("Dieses Bild konnte nicht geladen werden."); };
     img.src = reader.result;
   };
-  reader.onerror = ()=>{ alert("Foto konnte nicht gelesen werden."); };
+  reader.onerror = ()=>{ alert("Bild konnte nicht gelesen werden."); };
   reader.readAsDataURL(file);
   event.target.value = "";
 }

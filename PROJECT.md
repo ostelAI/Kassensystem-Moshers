@@ -8,7 +8,7 @@ kein Framework, kein Backend). Läuft komplett im Browser, Daten liegen in
 `localStorage`. Deployed als statische Seite auf GitHub Pages
 (https://ostelai.github.io/Kassensystem-Moshers/).
 
-**Aktuelle Version: 1.0.0** (Versionsnummer steht klein neben "Kasse" unter
+**Aktuelle Version: 1.0.1** (Versionsnummer steht klein neben "Kasse" unter
 dem Vereinsnamen oben links, `const APP_VERSION` im `<script>`). Darunter
 "powered by COC" mit dem COC-Logo (`coc-logo.png`, aus dem App-Symbol des
 COC-Dashboards).
@@ -103,7 +103,7 @@ lassen sich zwischen beiden Kassen austauschen.
 
 | Key | Inhalt |
 |---|---|
-| `moshers:products` | Array `{id, name, price, category, emoji, image?, pfandId}` – `image` ist optional ein Data-URL (Foto statt Icon, via Mediathek/Kamera ausgewählt, clientseitig auf ~220px verkleinert). `pfandId` verweist auf eine Pfandart oder ist `null` |
+| `moshers:products` | Array `{id, name, price, category, emoji, image?, pfandId}` – `image` ist optional ein Data-URL (Foto statt Icon, via Mediathek/Kamera ausgewählt, clientseitig auf max. 360 px verkleinert, JPEG; ältere Bilder haben 220 px). `pfandId` verweist auf eine Pfandart oder ist `null` |
 | `moshers:pfand-types` | Pfandarten `{id, name, amount}`, z. B. Becher 2,00 € |
 | `moshers:pfand-collected` / `moshers:pfand-returned` | Heute kassiertes / zurückgegebenes Pfand, resettet bei Tagesabschluss. **Kein Umsatz** |
 | `moshers:categories` | Array von Kategorienamen, frei erweiterbar/löschbar |
@@ -293,7 +293,9 @@ dort nie ein vom Benutzer bestimmter Text:
   `rangfolgeNeuBestimmen()`): beim Start, beim Tagesabschluss und wenn sich
   der Produktbestand ändert. Früher wurde nach jedem Verkauf neu sortiert –
   dadurch verschoben sich die Kacheln mitten im Betrieb unter dem Finger.
-  Zeigt Foto statt Emoji, falls eins hinterlegt ist.
+  Hat ein Produkt ein Bild, füllt es die Kachelbreite (`.product-photo`, 92 px
+  hoch, zugeschnitten); sonst das Emoji. In Bon-nahen Listen (Verwaltung,
+  Ranking, Inventur) bleibt das Bild klein wie ein Icon.
 - **Bon** (rechts, dauerhaft sichtbar, kompakt): Bon-Leiste über dem Bon, die
   Chips **brechen um** und scrollen bei Bedarf senkrecht (`#tab-row`).
   **"+ Gast" steht außerhalb dieser Leiste** (`#tab-add`) und ist dadurch immer
@@ -321,7 +323,7 @@ dort nie ein vom Benutzer bestimmter Text:
 - **🏆 Tagesranking** / **📅 Wochenverlauf**: Tagesabschluss archiviert Tag
   automatisch, Verlauf einsehbar und pro Tag aufklappbar.
 - **Produktverwaltung**: nach Kategorie gruppiert, Foto-Upload (Mediathek/
-  Kamera, wird clientseitig via Canvas verkleinert auf JPEG q0.78), Icon-
+  Kamera, wird clientseitig via Canvas verkleinert auf JPEG q0.8, max. 360 px), Icon-
   Fallback (60+ Emoji-Auswahl), freie Kategorienverwaltung, Löschen nur mit
   Bestätigungsdialog.
 - **⬇ Sichern / ⬆ Wiederherstellen**: vollständiger JSON-Export/Import,
@@ -336,9 +338,9 @@ dort nie ein vom Benutzer bestimmter Text:
 ## Wichtige Konventionen, die bisher eingehalten wurden
 - **Sprache**: Alles auf Deutsch (UI-Texte, Kommentare im Code, Commit-
   artige Zusammenfassungen an den Nutzer).
-- **Versionsnummer**: Wird nur auf explizite Anweisung des Nutzers erhöht/
-  geändert – nicht automatisch bei jeder Änderung. Format zuletzt
-  `MAJOR.MINOR.PATCH` (z. B. 1.0.0). Klein neben dem Titel anzeigen,
+- **Versionsnummer**: Seit 17.09.2026 auf Wunsch des Nutzers **bei jeder
+  veröffentlichten Änderung PATCH um 1 erhöhen** (1.0.0 → 1.0.1 → 1.0.2 …).
+  MINOR/MAJOR nur auf Anweisung. Format `MAJOR.MINOR.PATCH`. Klein neben dem Titel anzeigen,
   Dateiname enthält ebenfalls die Version (z. B. `moshers-kasse-v1.0.0.html`
   als Referenz – im Deploy heißt sie aber `index.html`).
 - **Datensicherheit hat hohe Priorität**: Nutzer ist sehr besorgt, dass bei
