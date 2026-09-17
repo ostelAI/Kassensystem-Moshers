@@ -8,7 +8,7 @@ kein Framework, kein Backend). Läuft komplett im Browser, Daten liegen in
 `localStorage`. Deployed als statische Seite auf GitHub Pages
 (https://ostelai.github.io/Kassensystem-Moshers/).
 
-**Aktuelle Version: 1.0.2** (Versionsnummer steht klein neben "Kasse" unter
+**Aktuelle Version: 1.0.3** (Versionsnummer steht klein neben "Kasse" unter
 dem Vereinsnamen oben links, `const APP_VERSION` im `<script>`). Darunter
 "powered by COC" mit dem COC-Logo (`coc-logo.png`, aus dem App-Symbol des
 COC-Dashboards).
@@ -43,8 +43,9 @@ aus der Original-Vektordatei neu erzeugt, siehe "Branding".
 - `manifest.json` – PWA-Manifest (Name, Icons, `display: standalone`)
 - `night-warrior.ttf` – Vereinsschrift, siehe "Branding"
 - `coc-logo.png` – COC-Logo für "powered by COC" in der Kopfzeile
-- `icon-32.png`, `icon-180.png`, `icon-192.png`, `icon-512.png` – App-Icons,
-  die Manni-Figur aus dem Vereinslogo auf dunkelrotem Grund
+- `icon-32.png`, `icon-180.png`, `icon-192.png`, `icon-512.png` – App-Icons
+- `icon-quelle.png` – Vorlage der App-Icons (vom Nutzer geliefert), nur
+  Archiv: die App lädt sie nicht
 
 Diese Dateien liegen zusammen im Root-Verzeichnis eines Netlify-Sites-Deploys
 (kein Unterordner). `index.html` verlinkt Manifest und Icons per `<link>`-Tags
@@ -189,9 +190,13 @@ gilt die Umstellung als erledigt.
   per `<use href="#manni">` ein. Die Farbe kommt über `currentColor` vom
   Einsatzort (hell auf der Tafel, Tinte auf dem Bon) – es gibt also keine
   Farbvarianten als Bilddateien.
-- **App-Icons:** Nur die Figur ohne Schriftzug, cremefarben auf dunkelrotem
-  Verlauf. 192/512 mit Rand für "maskable", 180/32 enger zugeschnitten, das
-  32er mit dickeren Linien, damit es als Favicon noch erkennbar ist.
+- **App-Icons:** Seit 1.0.3 die vom Nutzer gelieferte Vorlage
+  `icon-quelle.png` (Manni mit Schriftzug "KASSENAPP", weiß auf Schwarz).
+  512/192 mit Rand, weil sie auch als "maskable" dienen – ohne Rand schneiden
+  Android und Windows die Ecken samt Schriftzug ab. 180 enger, das 32er zeigt
+  nur die Figur: Der Schriftzug wäre bei dieser Größe nur ein Fleck.
+  **Icons ändern heißt Cache hochzählen:** `CACHE_APP` in `sw.js` (aktuell
+  `app-v3`), sonst behalten schon installierte Geräte die alten Symbole.
 - **Schrift "Night Warrior"** (Pixel Sagas, Freeware) für Vereinsname und
   Bon-Kopf. Eigene Datei `night-warrior.ttf`, vom Service Worker mit
   vorgehalten. Ersatzschrift: Archivo Black.
